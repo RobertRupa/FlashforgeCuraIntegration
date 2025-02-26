@@ -24,10 +24,10 @@ from . import gx
 
 try:
     from PyQt6.QtGui import QImage
-    from PyQt6.QtCore import QByteArray, QBuffer
+    from PyQt6.QtCore import QByteArray, QBuffer, QIODeviceBase
 except ImportError:
     from PyQt5.QtGui import QImage
-    from PyQt5.QtCore import QByteArray, QBuffer
+    from PyQt5.QtCore import QByteArray, QBuffer, QIODeviceBase
 
 
 # Helper function that extracts values from gcode to add to the binary header.
@@ -108,16 +108,16 @@ class GXWriter(MeshWriter):
     def _createSnapshot(self, g, *args):
         Logger.log("i", "Creating thumbnail image ...")
         try:
-            # Convert the image to grayscale, and back to 24bits so it renders properly
-            # in printer.
-            img = Snapshot.snapshot(width = 80, height = 60)
-            #img = img.convertToFormat(QImage.Format_Grayscale8)
-            #img = img.convertToFormat(QImage.Format_RGB666)
-            # Converts the image into BMP byte array.
+            qt_openmode_ctx = QIODeviceBase.OpenModeFlag
+
+            img = Snapshot.snapshot(width = 320, height = 320)
+            img = img.convertToFormat(QImage.Format.Format_RGB666)
+
             arr = QByteArray()
             buff = QBuffer(arr)
-            buff.open(QBuffer.OpenModeFlag.WriteOnly)
-            img.save(buff, format="BMP")
+            buff.open(qt_openmode_ctx.WriteOnly)
+            img.save(buff, format="PNG")
+
             g.bmp = arr.data() 
         except Exception:
             Logger.logException("w", "Failed to create snapshot image")
